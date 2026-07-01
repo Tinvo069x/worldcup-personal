@@ -89,6 +89,15 @@
   .team-row .score{font-variant-numeric:tabular-nums;font-weight:800;color:var(--white);}
   .prob{font-size:11px;color:var(--muted);margin-top:8px;}
 
+  .match.arg{
+    border-color:#6cbdec;
+    background:linear-gradient(135deg, rgba(108,189,236,0.16), rgba(255,255,255,0.05) 60%);
+    box-shadow:0 0 0 1px rgba(108,189,236,0.35) inset;
+  }
+  .match.arg .tag .upcoming{color:#6cbdec;}
+  .match.arg .name.arg-team{color:#6cbdec;font-weight:800;}
+  .match.arg .name.arg-team::before{content:"🇦🇷 ";}
+
   .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
   .group-card{
     background:rgba(255,255,255,0.04);
@@ -287,10 +296,13 @@ function renderMatches(matches){
   } else {
     elUpcoming.innerHTML = upcoming.map(m => {
       const local = fmtVN(m.vn);
-      return `<div class="match">
+      const isArg1 = m.team1 === 'Argentina';
+      const isArg2 = m.team2 === 'Argentina';
+      const cardClass = (isArg1 || isArg2) ? 'match arg' : 'match';
+      return `<div class="${cardClass}">
         <div class="tag"><span class="upcoming">Sắp diễn ra</span><span>${local}</span></div>
-        <div class="team-row"><span class="name">${m.team1}</span><span class="score">–</span></div>
-        <div class="team-row"><span class="name">${m.team2}</span><span class="score">–</span></div>
+        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}</span><span class="score">–</span></div>
+        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}</span><span class="score">–</span></div>
         <div class="prob">${m.round || ''}${m.ground ? ' · ' + m.ground : ''}</div>
       </div>`;
     }).join('');
