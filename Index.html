@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>World Cup 2026 — Lịch & Bảng Xếp Hạng</title>
+<style>
+  :root{
+    --field:#0c2340;
+    --field-2:#163a63;
+    --gold:#d4a72c;
+    --red:#c8102e;
+    --white:#f5f6f0;
+    --muted:#8fa3c0;
+    --win:#3fae62;
+    --draw:#d4a72c;
+    --loss:#7a7f8c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,var(--field) 0%, var(--field-2) 100%);
+    color:var(--white);
+    font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding:28px 16px 60px;
+  }
+  .display{font-family:Georgia,'Times New Roman',serif;font-weight:800;}
+  header{
+    max-width:1080px;margin:0 auto 24px;
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;
+    border-bottom:3px solid var(--gold);
+    padding-bottom:16px;
+  }
+  h1{margin:0;font-size:clamp(24px,3.6vw,38px);text-transform:uppercase;letter-spacing:0.02em;}
+  h1 span{color:var(--gold);}
+  .snapshot-note{
+    max-width:1080px;margin:0 auto 22px;
+    background:rgba(212,167,44,0.12);
+    border:1px solid rgba(212,167,44,0.4);
+    border-radius:6px;
+    padding:10px 14px;
+    font-size:13px;
+    color:var(--white);
+  }
+  .snapshot-note b{color:var(--gold);}
+  .snapshot-note code{background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px;font-size:12px;}
+  #data-status{font-weight:600;}
+  #data-status.ok{color:var(--win);}
+  #data-status.err{color:var(--red);}
+  #refresh-btn{
+    margin-left:8px;background:var(--gold);color:var(--field);border:none;
+    border-radius:4px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;
+  }
+  #refresh-btn:hover{opacity:0.85;}
+  #refresh-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .empty-note{color:var(--muted);font-size:13px;padding:8px 0;}
+  main{max-width:1080px;margin:0 auto;}
+  section{margin-bottom:36px;}
+  .section-title{
+    font-size:13px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--gold);margin:0 0 12px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .section-title::after{content:"";flex:1;height:1px;background:rgba(255,255,255,0.15);}
+
+  .matches-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:720px){ .matches-cols{grid-template-columns:1fr;} }
+  .matches-col .col-title{
+    font-size:12px;letter-spacing:0.1em;text-transform:uppercase;
+    margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.15);
+    display:flex;align-items:center;gap:8px;
+  }
+  .matches-col .col-title.upcoming-title{color:var(--gold);}
+  .matches-col .col-title.done-title{color:var(--win);}
+  .matches{display:flex;flex-direction:column;gap:14px;}
+  .match{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;padding:12px 14px;
+  }
+  .match .tag{
+    font-size:10px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;
+  }
+  .match .tag .live{color:var(--red);font-weight:bold;}
+  .match .tag .done{color:var(--win);}
+  .match .tag .upcoming{color:var(--gold);}
+  .team-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:14.5px;}
+  .team-row .name{font-weight:600;}
+  .team-row .score{font-variant-numeric:tabular-nums;font-weight:800;color:var(--white);}
+  .prob{font-size:11px;color:var(--muted);margin-top:8px;}
+
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+  .group-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;overflow:hidden;
+  }
+  .group-card h3{
+    margin:0;padding:8px 12px;background:rgba(212,167,44,0.15);
+    font-size:12px;letter-spacing:0.06em;color:var(--gold);text-transform:uppercase;
+  }
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{padding:5px 10px;text-align:left;}
+  th{color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;}
+  td.num, th.num{text-align:center;}
+  tr:nth-child(even){background:rgba(255,255,255,0.03);}
+  tr.qualify{border-left:3px solid var(--win);}
+
+  footer{
+    max-width:1080px;margin:20px auto 0;font-size:11px;color:var(--muted);
+    border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="display">Fifa World Cup <span>2026</span></h1>
+</header>
+
+<div class="snapshot-note">
+  <b>Nguồn dữ liệu:</b> Trang tự động <code>fetch()</code> dữ liệu thật từ <b>openfootball/worldcup.json</b> (public domain, miễn phí, không cần API key) ngay trong trình duyệt. Kết quả được lưu cache 24 giờ (localStorage) nên không gọi lại liên tục — bấm nút "Làm mới dữ liệu" để fetch lại ngay. Vì nguồn này cập nhật bằng tay (không phải live), có thể trễ vài giờ so với thực tế trận đấu. <span id="data-status">Đang tải dữ liệu…</span><button id="refresh-btn" onclick="forceRefresh()">↻ Làm mới dữ liệu</button>
+</div>
+
+<main>
+  <section id="matches-section">
+    <div class="section-title">Trận đấu (giờ Việt Nam)</div>
+    <div class="matches-cols">
+      <div class="matches-col">
+        <h3 class="col-title upcoming-title">Sắp diễn ra</h3>
+        <div class="matches" id="matches-upcoming"></div>
+      </div>
+      <div class="matches-col">
+        <h3 class="col-title done-title">Kết quả</h3>
+        <div class="matches" id="matches-done"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="groups-section">
+    <div class="section-title">Bảng xếp hạng vòng bảng</div>
+    <div class="groups" id="groups"></div>
+  </section>
+</main>
+
+<footer>
+  Dữ liệu: FIFA World Cup 2026 — vòng bảng, nguồn openfootball/worldcup.json (public domain, cập nhật ~1 lần/ngày). 2 đội đầu mỗi bảng đi tiếp vào vòng 32 đội. Bảng xếp hạng được tính lại từ kết quả trận mỗi lần tải trang.
+</footer>
+
+<script>
+// ---- Nguồn dữ liệu miễn phí, không cần API key ----
+// openfootball/worldcup.json — public domain, cập nhật thủ công (không phải live)
+const DATA_URLS = [
+  'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json',
+  'https://cdn.jsdelivr.net/gh/openfootball/worldcup.json@master/2026/worldcup.json'
+];
+const CACHE_KEY = 'wc2026_cache_v1';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 1 lần / ngày
+
+const DOW = ['CN','T2','T3','T4','T5','T6','T7'];
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+// Chuyển "2026-06-28" + "13:00 UTC-6" -> Date (giờ VN, UTC+7) đã quy đổi
+function toVN(dateStr, timeStr){
+  if(!dateStr || !timeStr) return null;
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d+)/);
+  if(!m) return null;
+  const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10), offset = parseInt(m[3], 10);
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  // sân vận động = UTC + offset  =>  UTC = giờ_sân - offset  =>  VN = UTC + 7
+  const utcMs = Date.UTC(y, mo - 1, d, hh - offset, mm);
+  return new Date(utcMs + 7 * 60 * 60 * 1000);
+}
+
+function fmtVN(d){
+  if(!d) return '';
+  return `${DOW[d.getUTCDay()]}, ${pad(d.getUTCDate())}/${pad(d.getUTCMonth()+1)}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
+
+function isPlaceholderTeam(name){
+  if(!name) return true;
+  // vd: "2A", "1E", "3A/B/C/D/F", "W74", "L101"
+  return /^[0-9]/.test(name) || /^[WL]\d+$/.test(name) || name.includes('/');
+}
+
+function setStatus(text, cls){
+  const el = document.getElementById('data-status');
+  el.textContent = text;
+  el.className = cls || '';
+}
+
+async function fetchFresh(){
+  let lastErr = null;
+  for(const url of DATA_URLS){
+    try{
+      const res = await fetch(url, {cache:'no-store'});
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if(!data || !Array.isArray(data.matches)) throw new Error('Dữ liệu không hợp lệ');
+      try{
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+      }catch(e){ /* localStorage có thể bị chặn, bỏ qua */ }
+      return data;
+    }catch(e){
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('Không fetch được nguồn nào');
+}
+
+function readCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+
+async function loadData(forceRefresh){
+  const cached = readCache();
+  if(!forceRefresh && cached && (Date.now() - cached.ts) < CACHE_TTL_MS){
+    setStatus('Dữ liệu (cache, cập nhật ' + new Date(cached.ts).toLocaleString('vi-VN') + ')', 'ok');
+    return cached.data;
+  }
+  setStatus('Đang tải dữ liệu mới…', '');
+  try{
+    const data = await fetchFresh();
+    setStatus('Dữ liệu mới (cập nhật ' + new Date().toLocaleString('vi-VN') + ')', 'ok');
+    return data;
+  }catch(e){
+    if(cached){
+      setStatus('Không fetch được nguồn mới, dùng cache cũ (' + new Date(cached.ts).toLocaleString('vi-VN') + ')', 'err');
+      return cached.data;
+    }
+    setStatus('Không tải được dữ liệu (mạng bị chặn hoặc nguồn tạm lỗi)', 'err');
+    return null;
+  }
+}
+
+function computeGroups(matches){
+  const groups = {};
+  matches.forEach(m => {
+    if(!m.group) return;
+    const g = m.group.replace('Group ', '').trim();
+    if(!groups[g]) groups[g] = {};
+    [m.team1, m.team2].forEach(t => {
+      if(t && !groups[g][t]) groups[g][t] = { team: t, p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+    });
+    if(m.score && Array.isArray(m.score.ft)){
+      const [s1, s2] = m.score.ft;
+      const t1 = groups[g][m.team1], t2 = groups[g][m.team2];
+      if(!t1 || !t2) return;
+      t1.p++; t2.p++;
+      t1.gf += s1; t1.ga += s2;
+      t2.gf += s2; t2.ga += s1;
+      if(s1 > s2){ t1.w++; t1.pts += 3; t2.l++; }
+      else if(s1 < s2){ t2.w++; t2.pts += 3; t1.l++; }
+      else { t1.d++; t2.d++; t1.pts += 1; t2.pts += 1; }
+    }
+  });
+  const result = {};
+  Object.keys(groups).forEach(g => {
+    result[g] = Object.values(groups[g]).sort((a,b) =>
+      b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf
+    );
+  });
+  return result;
+}
+
+function renderMatches(matches){
+  const elUpcoming = document.getElementById('matches-upcoming');
+  const elDone = document.getElementById('matches-done');
+
+  const withTime = matches
+    .filter(m => !isPlaceholderTeam(m.team1) && !isPlaceholderTeam(m.team2))
+    .map(m => ({ ...m, vn: toVN(m.date, m.time) }))
+    .filter(m => m.vn);
+
+  const done = withTime.filter(m => m.score && Array.isArray(m.score.ft))
+    .sort((a,b) => b.vn - a.vn).slice(0, 10);
+  const upcoming = withTime.filter(m => !(m.score && Array.isArray(m.score.ft)))
+    .sort((a,b) => a.vn - b.vn).slice(0, 10);
+
+  if(upcoming.length === 0){
+    elUpcoming.innerHTML = '<div class="empty-note">Chưa có trận nào sắp diễn ra.</div>';
+  } else {
+    elUpcoming.innerHTML = upcoming.map(m => {
+      const local = fmtVN(m.vn);
+      return `<div class="match">
+        <div class="tag"><span class="upcoming">Sắp diễn ra</span><span>${local}</span></div>
+        <div class="team-row"><span class="name">${m.team1}</span><span class="score">–</span></div>
+        <div class="team-row"><span class="name">${m.team2}</span><span class="score">–</span></div>
+        <div class="prob">${m.round || ''}${m.ground ? ' · ' + m.ground : ''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  if(done.length === 0){
+    elDone.innerHTML = '<div class="empty-note">Chưa có kết quả nào.</div>';
+  } else {
+    elDone.innerHTML = done.map(m => {
+      const local = fmtVN(m.vn);
+      const [hs, as] = m.score.ft;
+      return `<div class="match">
+        <div class="tag"><span class="done">Kết thúc</span><span>${local}</span></div>
+        <div class="team-row"><span class="name">${m.team1}</span><span class="score">${hs}</span></div>
+        <div class="team-row"><span class="name">${m.team2}</span><span class="score">${as}</span></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderGroups(groups){
+  const el = document.getElementById('groups');
+  const keys = Object.keys(groups).sort();
+  if(keys.length === 0){
+    el.innerHTML = '<div class="empty-note">Chưa có dữ liệu bảng xếp hạng.</div>';
+    return;
+  }
+  el.innerHTML = keys.map(g => {
+    const rows = groups[g].map((t, i) => `
+      <tr class="${i < 2 ? 'qualify' : ''}">
+        <td>${t.team}</td>
+        <td class="num">${t.w}</td>
+        <td class="num">${t.l}</td>
+        <td class="num">${t.d}</td>
+        <td class="num"><b>${t.pts}</b></td>
+      </tr>`).join('');
+    return `<div class="group-card">
+      <h3>Bảng ${g}</h3>
+      <table>
+        <tr><th>Đội</th><th class="num">T</th><th class="num">B</th><th class="num">H</th><th class="num">Điểm</th></tr>
+        ${rows}
+      </table>
+    </div>`;
+  }).join('');
+}
+
+async function run(forceRefresh){
+  document.getElementById('refresh-btn').disabled = true;
+  const data = await loadData(forceRefresh);
+  if(data){
+    renderMatches(data.matches);
+    renderGroups(computeGroups(data.matches));
+  }
+  document.getElementById('refresh-btn').disabled = false;
+}
+
+function forceRefresh(){ run(true); }
+
+run(false);
+</script>
+
+</body>
+</html>
