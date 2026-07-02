@@ -81,46 +81,58 @@
   #vn-clock{font-size:22px;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:0.03em;}
 
   .tabs{
-    display:none;
+    display:flex;
     gap:8px;margin-top:14px;position:relative;z-index:1;
   }
   .tabs button{
     flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--muted);
-    padding:9px 6px;border-radius:7px;font-size:12px;font-weight:600;letter-spacing:0.03em;
-    text-transform:uppercase;cursor:pointer;
+    padding:11px 8px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:0.03em;
+    text-transform:uppercase;cursor:pointer;transition:background 0.15s,color 0.15s;
   }
+  .tabs button:hover{background:rgba(255,255,255,0.09);color:var(--ice);}
   .tabs button.active{background:var(--gold);color:var(--night);border-color:var(--gold);}
 
   /* ---------- DASHBOARD ---------- */
   .dashboard{
     flex:1 1 auto;
     min-height:0;
-    display:grid;
-    grid-template-columns:1fr 1fr 1.35fr;
-    gap:1px;
-    background:var(--line);
+    display:flex;
   }
   .pane{
+    flex:1 1 auto;
     min-height:0;
+    width:100%;
     background:var(--night);
-    display:flex;flex-direction:column;
+    display:none;
+    flex-direction:column;
   }
+  .pane.active{display:flex;}
   .pane-head{
     flex:0 0 auto;
-    padding:14px 18px 10px;
-    display:flex;align-items:center;gap:8px;
+    padding:16px 24px 12px;
+    display:flex;align-items:center;gap:10px;
     background:linear-gradient(180deg, var(--night-2), transparent);
   }
-  .pane-head .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .pane-head .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
   .dot.gold{background:var(--gold);box-shadow:0 0 8px rgba(224,177,60,0.7);}
   .dot.pitch{background:var(--pitch);box-shadow:0 0 8px rgba(47,158,99,0.7);}
   .dot.arg{background:var(--arg);box-shadow:0 0 8px rgba(108,189,236,0.7);}
   .pane-head span{
-    font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:600;
+    font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:600;
   }
   .pane-body{
     flex:1 1 auto;min-height:0;overflow-y:auto;
-    padding:6px 16px 24px;
+    padding:6px 24px 30px;
+  }
+  #pane-upcoming .matches{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:16px;
+  }
+  #pane-done .matches{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:16px;
   }
 
   /* ---------- MATCH TICKET CARDS ---------- */
@@ -161,16 +173,16 @@
   .empty-note{color:var(--muted);font-size:13px;padding:18px 0;}
 
   /* ---------- GROUPS ---------- */
-  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;padding-top:6px;}
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding-top:6px;}
   .group-card{background:var(--night-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
   .group-card h3{
     margin:0;padding:8px 12px;background:rgba(224,177,60,0.12);
     font-size:11.5px;letter-spacing:0.08em;color:var(--gold);text-transform:uppercase;
     font-family:'Anton',sans-serif;font-weight:400;
   }
-  table{width:100%;border-collapse:collapse;font-size:12px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th,td{padding:5px 10px;text-align:left;}
-  th{color:var(--muted);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:0.03em;}
+  th{color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.03em;}
   td.num, th.num{text-align:center;font-family:'Space Mono',monospace;}
   tr:nth-child(even){background:rgba(255,255,255,0.025);}
   tr.qualify{border-left:3px solid var(--pitch);}
@@ -192,14 +204,9 @@
   }
 
   /* ---------- RESPONSIVE ---------- */
-  @media (max-width:980px){
-    .dashboard{grid-template-columns:1fr;}
-    .pane{display:none;height:100%;}
-    .pane.active{display:flex;}
-    .tabs{display:flex;}
-  }
-  @media (max-width:520px){
+  @media (max-width:600px){
     .clock-block{display:none;}
+    .tabs button{font-size:11px;padding:9px 4px;}
   }
 </style>
 </head>
@@ -409,9 +416,10 @@ setInterval(run, AUTO_REFRESH_MS);
 
 // ---- Đồng hồ giờ Việt Nam ----
 function tickClock(){
-  const now = new Date(Date.now() + (7*60 - new Date().getTimezoneOffset()) * 60000);
+  const now = new Date();
+  const vn = new Date(now.getTime() + 7 * 60 * 60000); // getTime() luôn là mốc UTC, cộng thêm 7 giờ = giờ Việt Nam
   document.getElementById('vn-clock').textContent =
-    `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+    `${pad(vn.getUTCHours())}:${pad(vn.getUTCMinutes())}:${pad(vn.getUTCSeconds())}`;
 }
 tickClock();
 setInterval(tickClock, 1000);
