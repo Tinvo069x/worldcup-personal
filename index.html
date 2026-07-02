@@ -2,169 +2,277 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>World Cup 2026 (Tin Vo Quoc) — Lịch & Bảng Xếp Hạng</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIFA World Cup 2026 — Bảng điều khiển trực tuyến</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --field:#0c2340;
-    --field-2:#163a63;
-    --gold:#d4a72c;
-    --red:#c8102e;
-    --white:#f5f6f0;
-    --muted:#8fa3c0;
-    --win:#3fae62;
-    --draw:#d4a72c;
-    --loss:#7a7f8c;
+    --night:#050d1a;
+    --night-2:#0b1b33;
+    --night-3:#122647;
+    --gold:#e0b13c;
+    --gold-dim:#8a6c22;
+    --pitch:#2f9e63;
+    --ice:#f3f6f9;
+    --muted:#7d90ad;
+    --line:rgba(255,255,255,0.09);
+    --arg:#6cbdec;
   }
   *{box-sizing:border-box;}
+  html,body{height:100%;}
   body{
     margin:0;
-    background:linear-gradient(180deg,var(--field) 0%, var(--field-2) 100%);
-    color:var(--white);
-    font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    padding:28px 16px 60px;
+    background:var(--night);
+    color:var(--ice);
+    font-family:'Inter',sans-serif;
+    overflow:hidden;
   }
-  .display{font-family:Georgia,'Times New Roman',serif;font-weight:800;}
-  header{
-    max-width:1080px;margin:0 auto 24px;
-    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;
-    border-bottom:3px solid var(--gold);
-    padding-bottom:16px;
-  }
-  h1{margin:0;font-size:clamp(24px,3.6vw,38px);text-transform:uppercase;letter-spacing:0.02em;}
-  h1 span{color:var(--gold);}
-  .empty-note{color:var(--muted);font-size:13px;padding:8px 0;}
-  main{max-width:1080px;margin:0 auto;}
-  section{margin-bottom:36px;}
-  .section-title{
-    font-size:13px;letter-spacing:0.14em;text-transform:uppercase;
-    color:var(--gold);margin:0 0 12px;
-    display:flex;align-items:center;gap:10px;
-  }
-  .section-title::after{content:"";flex:1;height:1px;background:rgba(255,255,255,0.15);}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--night-3);border-radius:4px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--gold-dim);}
 
-  .matches-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
-  @media (max-width:720px){ .matches-cols{grid-template-columns:1fr;} }
-  .matches-col .col-title{
-    font-size:12px;letter-spacing:0.1em;text-transform:uppercase;
-    margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.15);
+  .display{font-family:'Anton',sans-serif;font-weight:400;letter-spacing:0.01em;}
+  .mono{font-family:'Space Mono',monospace;}
+
+  .app{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- TOPBAR / FLOODLIGHT SIGNATURE ---------- */
+  .topbar{
+    position:relative;
+    flex:0 0 auto;
+    overflow:hidden;
+    background:radial-gradient(120% 260% at 12% -60%, rgba(224,177,60,0.30), transparent 55%),
+               radial-gradient(120% 260% at 88% -60%, rgba(108,189,236,0.18), transparent 55%),
+               linear-gradient(180deg, var(--night-2), var(--night));
+    border-bottom:1px solid var(--line);
+    padding:16px 24px 14px;
+  }
+  .topbar::after{
+    content:"";
+    position:absolute;inset:auto 0 0 0;height:3px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity:0.6;
+    animation:sweep 6s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%,100%{opacity:0.25; transform:translateX(-10%);}
+    50%{opacity:0.7; transform:translateX(10%);}
+  }
+  .topbar-row{
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;
+    position:relative;z-index:1;
+  }
+  .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  h1{margin:0;font-size:clamp(22px,3vw,34px);text-transform:uppercase;line-height:1;}
+  h1 .gold{color:var(--gold);}
+  .brand-sub{
+    font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);
+    border-left:2px solid var(--gold-dim);padding-left:10px;
+  }
+  .clock-block{text-align:right;}
+  .clock-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+  #vn-clock{font-size:22px;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:0.03em;}
+
+  .tabs{
+    display:none;
+    gap:8px;margin-top:14px;position:relative;z-index:1;
+  }
+  .tabs button{
+    flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--muted);
+    padding:9px 6px;border-radius:7px;font-size:12px;font-weight:600;letter-spacing:0.03em;
+    text-transform:uppercase;cursor:pointer;
+  }
+  .tabs button.active{background:var(--gold);color:var(--night);border-color:var(--gold);}
+
+  /* ---------- DASHBOARD ---------- */
+  .dashboard{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns:1fr 1fr 1.35fr;
+    gap:1px;
+    background:var(--line);
+  }
+  .pane{
+    min-height:0;
+    background:var(--night);
+    display:flex;flex-direction:column;
+  }
+  .pane-head{
+    flex:0 0 auto;
+    padding:14px 18px 10px;
     display:flex;align-items:center;gap:8px;
+    background:linear-gradient(180deg, var(--night-2), transparent);
   }
-  .matches-col .col-title.upcoming-title{color:var(--gold);}
-  .matches-col .col-title.done-title{color:var(--win);}
-  .matches{display:flex;flex-direction:column;gap:14px;}
+  .pane-head .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .dot.gold{background:var(--gold);box-shadow:0 0 8px rgba(224,177,60,0.7);}
+  .dot.pitch{background:var(--pitch);box-shadow:0 0 8px rgba(47,158,99,0.7);}
+  .dot.arg{background:var(--arg);box-shadow:0 0 8px rgba(108,189,236,0.7);}
+  .pane-head span{
+    font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:600;
+  }
+  .pane-body{
+    flex:1 1 auto;min-height:0;overflow-y:auto;
+    padding:6px 16px 24px;
+  }
+
+  /* ---------- MATCH TICKET CARDS ---------- */
+  .matches{display:flex;flex-direction:column;gap:12px;padding-top:6px;}
   .match{
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);
-    border-radius:8px;padding:12px 14px;
+    position:relative;
+    background:var(--night-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 16px;
   }
-  .match .tag{
-    font-size:10px;text-transform:uppercase;letter-spacing:0.08em;
-    color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;
+  .match::before,.match::after{
+    content:"";position:absolute;width:14px;height:14px;background:var(--night);
+    border-radius:50%;top:50%;transform:translateY(-50%);
   }
-  .match .tag .live{color:var(--red);font-weight:bold;}
-  .match .tag .done{color:var(--win);}
-  .match .tag .upcoming{color:var(--gold);}
-  .team-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:14.5px;}
-  .team-row .name{font-weight:600;}
-  .team-row .score{font-variant-numeric:tabular-nums;font-weight:800;color:var(--white);}
-  .prob{font-size:11px;color:var(--muted);margin-top:8px;}
+  .match::before{left:-8px;}
+  .match::after{right:-8px;}
+  .match-inner-divider{
+    border-top:1px dashed var(--line);margin:8px 0;
+  }
+  .tag{
+    font-size:9.5px;text-transform:uppercase;letter-spacing:0.1em;
+    color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;
+  }
+  .tag .status.upcoming{color:var(--gold);}
+  .tag .status.done{color:var(--pitch);}
+  .team-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+  .team-row .name{font-weight:600;font-size:14px;}
+  .team-row .score{font-family:'Anton',sans-serif;font-size:20px;font-variant-numeric:tabular-nums;color:var(--ice);}
+  .team-row .score.dash{color:var(--muted);font-family:'Inter',sans-serif;font-weight:800;}
+  .meta{font-size:10.5px;color:var(--muted);margin-top:6px;}
 
-  .match.arg{
-    border-color:#6cbdec;
-    background:linear-gradient(135deg, rgba(108,189,236,0.16), rgba(255,255,255,0.05) 60%);
-    box-shadow:0 0 0 1px rgba(108,189,236,0.35) inset;
-  }
-  .match.arg .tag .upcoming{color:#6cbdec;}
-  .match.arg .name.arg-team{color:#6cbdec;font-weight:800;}
+  .match.arg{border-color:rgba(108,189,236,0.45);background:linear-gradient(135deg, rgba(108,189,236,0.10), var(--night-2) 65%);}
+  .match.arg .name.arg-team{color:var(--arg);}
   .match.arg .name.arg-team::before{content:"🇦🇷 ";}
+  .match.arg .tag .status.upcoming{color:var(--arg);}
 
-  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
-  .group-card{
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.1);
-    border-radius:8px;overflow:hidden;
-  }
+  .empty-note{color:var(--muted);font-size:13px;padding:18px 0;}
+
+  /* ---------- GROUPS ---------- */
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;padding-top:6px;}
+  .group-card{background:var(--night-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
   .group-card h3{
-    margin:0;padding:8px 12px;background:rgba(212,167,44,0.15);
-    font-size:12px;letter-spacing:0.06em;color:var(--gold);text-transform:uppercase;
+    margin:0;padding:8px 12px;background:rgba(224,177,60,0.12);
+    font-size:11.5px;letter-spacing:0.08em;color:var(--gold);text-transform:uppercase;
+    font-family:'Anton',sans-serif;font-weight:400;
   }
-  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
   th,td{padding:5px 10px;text-align:left;}
-  th{color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;}
-  td.num, th.num{text-align:center;}
-  tr:nth-child(even){background:rgba(255,255,255,0.03);}
-  tr.qualify{border-left:3px solid var(--win);}
+  th{color:var(--muted);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:0.03em;}
+  td.num, th.num{text-align:center;font-family:'Space Mono',monospace;}
+  tr:nth-child(even){background:rgba(255,255,255,0.025);}
+  tr.qualify{border-left:3px solid var(--pitch);}
 
-  footer{
-    max-width:1080px;margin:20px auto 0;font-size:11px;color:var(--muted);
-    border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;
+  /* ---------- STATUS BAR ---------- */
+  .statusbar{
+    flex:0 0 auto;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 24px;font-size:10.5px;color:var(--muted);
+    border-top:1px solid var(--line);background:var(--night-2);
+  }
+  .statusbar .live-dot{width:6px;height:6px;border-radius:50%;background:var(--pitch);display:inline-block;margin-right:6px;
+    animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  @media (prefers-reduced-motion: reduce){
+    .topbar::after{animation:none;}
+    .statusbar .live-dot{animation:none;}
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:980px){
+    .dashboard{grid-template-columns:1fr;}
+    .pane{display:none;height:100%;}
+    .pane.active{display:flex;}
+    .tabs{display:flex;}
+  }
+  @media (max-width:520px){
+    .clock-block{display:none;}
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1 class="display">Fifa World Cup <span>2026 (Tins) </span></h1>
-</header>
+<div class="app">
 
-<main>
-  <section id="matches-section">
-    <div class="section-title">Trận đấu (giờ Việt Nam)</div>
-    <div class="matches-cols">
-      <div class="matches-col">
-        <h3 class="col-title upcoming-title">Sắp diễn ra</h3>
-        <div class="matches" id="matches-upcoming"></div>
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <h1 class="display">Fifa World Cup <span class="gold">2026</span></h1>
+        <span class="brand-sub">By Tin Vo Quoc</span>
       </div>
-      <div class="matches-col">
-        <h3 class="col-title done-title">Kết quả</h3>
-        <div class="matches" id="matches-done"></div>
+      <div class="clock-block">
+        <div class="clock-label">Giờ Việt Nam</div>
+        <div id="vn-clock" class="mono">--:--:--</div>
       </div>
     </div>
-  </section>
+    <div class="tabs">
+      <button class="tab-btn active" data-target="pane-upcoming">Sắp diễn ra</button>
+      <button class="tab-btn" data-target="pane-done">Kết quả</button>
+      <button class="tab-btn" data-target="pane-groups">Bảng xếp hạng</button>
+    </div>
+  </div>
 
-  <section id="groups-section">
-    <div class="section-title">Bảng xếp hạng vòng bảng</div>
-    <div class="groups" id="groups"></div>
-  </section>
-</main>
+  <div class="dashboard">
+    <div class="pane active" id="pane-upcoming">
+      <div class="pane-head"><span class="dot gold"></span><span>Sắp diễn ra</span></div>
+      <div class="pane-body"><div class="matches" id="matches-upcoming"></div></div>
+    </div>
+    <div class="pane" id="pane-done">
+      <div class="pane-head"><span class="dot pitch"></span><span>Kết quả</span></div>
+      <div class="pane-body"><div class="matches" id="matches-done"></div></div>
+    </div>
+    <div class="pane" id="pane-groups">
+      <div class="pane-head"><span class="dot arg"></span><span>Bảng xếp hạng vòng bảng</span></div>
+      <div class="pane-body"><div class="groups" id="groups"></div></div>
+    </div>
+  </div>
 
-<footer>
-  Dữ liệu: FIFA World Cup 2026 — vòng bảng, nguồn openfootball/worldcup.json (public domain, cập nhật ~1 lần/ngày). 2 đội đầu mỗi bảng đi tiếp vào vòng 32 đội. Bảng xếp hạng được tính lại từ kết quả trận mỗi lần tải trang. Trang tự động làm mới dữ liệu định kỳ.
-</footer>
+  <div class="statusbar">
+    <div><span class="live-dot"></span>Tự động làm mới mỗi 5 phút · nguồn openfootball/worldcup.json</div>
+    <div id="last-updated">Đang tải…</div>
+  </div>
+
+</div>
 
 <script>
 // ---- Nguồn dữ liệu miễn phí, không cần API key ----
-// openfootball/worldcup.json — public domain, cập nhật thủ công (không phải live)
 const DATA_URLS = [
   'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json',
   'https://cdn.jsdelivr.net/gh/openfootball/worldcup.json@master/2026/worldcup.json'
 ];
-const AUTO_REFRESH_MS = 5 * 60 * 1000; // tự động fetch lại mỗi 5 phút
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
 const DOW = ['CN','T2','T3','T4','T5','T6','T7'];
-
 function pad(n){ return String(n).padStart(2,'0'); }
 
-// Chuyển "2026-06-28" + "13:00 UTC-6" -> Date (giờ VN, UTC+7) đã quy đổi
 function toVN(dateStr, timeStr){
   if(!dateStr || !timeStr) return null;
   const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d+)/);
   if(!m) return null;
   const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10), offset = parseInt(m[3], 10);
   const [y, mo, d] = dateStr.split('-').map(Number);
-  // sân vận động = UTC + offset  =>  UTC = giờ_sân - offset  =>  VN = UTC + 7
   const utcMs = Date.UTC(y, mo - 1, d, hh - offset, mm);
   return new Date(utcMs + 7 * 60 * 60 * 1000);
 }
-
 function fmtVN(d){
   if(!d) return '';
   return `${DOW[d.getUTCDay()]}, ${pad(d.getUTCDate())}/${pad(d.getUTCMonth()+1)}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
-
 function isPlaceholderTeam(name){
   if(!name) return true;
-  // vd: "2A", "1E", "3A/B/C/D/F", "W74", "L101"
   return /^[0-9]/.test(name) || /^[WL]\d+$/.test(name) || name.includes('/');
 }
 
@@ -177,9 +285,7 @@ async function fetchFresh(){
       const data = await res.json();
       if(!data || !Array.isArray(data.matches)) throw new Error('Dữ liệu không hợp lệ');
       return data;
-    }catch(e){
-      lastErr = e;
-    }
+    }catch(e){ lastErr = e; }
   }
   throw lastErr || new Error('Không fetch được nguồn nào');
 }
@@ -224,40 +330,38 @@ function renderMatches(matches){
     .filter(m => m.vn);
 
   const done = withTime.filter(m => m.score && Array.isArray(m.score.ft))
-    .sort((a,b) => b.vn - a.vn).slice(0, 10);
+    .sort((a,b) => b.vn - a.vn).slice(0, 30);
   const upcoming = withTime.filter(m => !(m.score && Array.isArray(m.score.ft)))
-    .sort((a,b) => a.vn - b.vn).slice(0, 10);
+    .sort((a,b) => a.vn - b.vn).slice(0, 30);
 
-  if(upcoming.length === 0){
-    elUpcoming.innerHTML = '<div class="empty-note">Chưa có trận nào sắp diễn ra.</div>';
-  } else {
-    elUpcoming.innerHTML = upcoming.map(m => {
+  elUpcoming.innerHTML = upcoming.length === 0
+    ? '<div class="empty-note">Chưa có trận nào sắp diễn ra.</div>'
+    : upcoming.map(m => {
       const local = fmtVN(m.vn);
       const isArg1 = m.team1 === 'Argentina';
       const isArg2 = m.team2 === 'Argentina';
       const cardClass = (isArg1 || isArg2) ? 'match arg' : 'match';
       return `<div class="${cardClass}">
-        <div class="tag"><span class="upcoming">Sắp diễn ra</span><span>${local}</span></div>
-        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}</span><span class="score">–</span></div>
-        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}</span><span class="score">–</span></div>
-        <div class="prob">${m.round || ''}${m.ground ? ' · ' + m.ground : ''}</div>
+        <div class="tag"><span class="status upcoming">Sắp diễn ra</span><span>${local}</span></div>
+        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}</span><span class="score dash">–</span></div>
+        <div class="match-inner-divider"></div>
+        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}</span><span class="score dash">–</span></div>
+        <div class="meta">${m.round || ''}${m.ground ? ' · ' + m.ground : ''}</div>
       </div>`;
     }).join('');
-  }
 
-  if(done.length === 0){
-    elDone.innerHTML = '<div class="empty-note">Chưa có kết quả nào.</div>';
-  } else {
-    elDone.innerHTML = done.map(m => {
+  elDone.innerHTML = done.length === 0
+    ? '<div class="empty-note">Chưa có kết quả nào.</div>'
+    : done.map(m => {
       const local = fmtVN(m.vn);
       const [hs, as] = m.score.ft;
       return `<div class="match">
-        <div class="tag"><span class="done">Kết thúc</span><span>${local}</span></div>
+        <div class="tag"><span class="status done">Kết thúc</span><span>${local}</span></div>
         <div class="team-row"><span class="name">${m.team1}</span><span class="score">${hs}</span></div>
+        <div class="match-inner-divider"></div>
         <div class="team-row"><span class="name">${m.team2}</span><span class="score">${as}</span></div>
       </div>`;
     }).join('');
-  }
 }
 
 function renderGroups(groups){
@@ -292,15 +396,35 @@ async function run(){
     if(data){
       renderMatches(data.matches);
       renderGroups(computeGroups(data.matches));
+      document.getElementById('last-updated').textContent =
+        'Cập nhật lúc ' + new Date().toLocaleTimeString('vi-VN');
     }
   }catch(e){
-    // im lặng bỏ qua lỗi mạng, giữ nguyên dữ liệu đang hiển thị và thử lại ở lần tự động refresh tiếp theo
+    document.getElementById('last-updated').textContent = 'Không tải được dữ liệu — sẽ thử lại';
     console.warn('Không tải được dữ liệu World Cup:', e);
   }
 }
-
 run();
 setInterval(run, AUTO_REFRESH_MS);
+
+// ---- Đồng hồ giờ Việt Nam ----
+function tickClock(){
+  const now = new Date(Date.now() + (7*60 - new Date().getTimezoneOffset()) * 60000);
+  document.getElementById('vn-clock').textContent =
+    `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+// ---- Chuyển tab trên màn hình nhỏ ----
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
 </script>
 
 </body>
