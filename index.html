@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --night:#050d1a;
-    --night-2:#0b1b33;
-    --night-3:#122647;
-    --gold:#e0b13c;
-    --gold-dim:#8a6c22;
-    --pitch:#2f9e63;
-    --ice:#f3f6f9;
-    --muted:#7d90ad;
-    --line:rgba(255,255,255,0.09);
-    --arg:#6cbdec;
+    --night:#eef2f8;
+    --night-2:#ffffff;
+    --night-3:#c9d6ea;
+    --gold:#1657e0;
+    --gold-dim:#0d3aa8;
+    --pitch:#1fa35c;
+    --ice:#16213e;
+    --muted:#6b7a99;
+    --line:#e1e7f2;
+    --arg:#2f8fef;
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -48,12 +48,21 @@
     position:relative;
     flex:0 0 auto;
     overflow:hidden;
-    background:radial-gradient(120% 260% at 12% -60%, rgba(224,177,60,0.30), transparent 55%),
-               radial-gradient(120% 260% at 88% -60%, rgba(108,189,236,0.18), transparent 55%),
-               linear-gradient(180deg, var(--night-2), var(--night));
-    border-bottom:1px solid var(--line);
+    background:radial-gradient(120% 260% at 12% -60%, rgba(22,87,224,0.14), transparent 55%),
+               radial-gradient(120% 260% at 88% -60%, rgba(47,143,239,0.12), transparent 55%),
+               linear-gradient(180deg, #0f3fc7, #123fbf);
+    border-bottom:1px solid var(--gold-dim);
     padding:16px 24px 14px;
+    box-shadow:0 2px 10px rgba(15,25,60,0.15);
   }
+  .topbar h1,
+  .topbar .brand-sub,
+  .topbar .clock-label,
+  .topbar #vn-clock{color:#fff;}
+  .topbar .brand-sub{border-left-color:rgba(255,255,255,0.45);color:rgba(255,255,255,0.75);}
+  .topbar .clock-label{color:rgba(255,255,255,0.65);}
+  .topbar h1 .gold{color:#ffd75e;}
+  .topbar #vn-clock{color:#ffd75e;}
   .topbar::after{
     content:"";
     position:absolute;inset:auto 0 0 0;height:3px;
@@ -85,12 +94,12 @@
     gap:8px;margin-top:14px;position:relative;z-index:1;
   }
   .tabs button{
-    flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--muted);
+    flex:1;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.8);
     padding:11px 8px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:0.03em;
     text-transform:uppercase;cursor:pointer;transition:background 0.15s,color 0.15s;
   }
-  .tabs button:hover{background:rgba(255,255,255,0.09);color:var(--ice);}
-  .tabs button.active{background:var(--gold);color:var(--night);border-color:var(--gold);}
+  .tabs button:hover{background:rgba(255,255,255,0.18);color:#fff;}
+  .tabs button.active{background:#fff;color:var(--gold);border-color:#fff;}
 
   /* ---------- DASHBOARD ---------- */
   .dashboard{
@@ -114,9 +123,9 @@
     background:linear-gradient(180deg, var(--night-2), transparent);
   }
   .pane-head .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
-  .dot.gold{background:var(--gold);box-shadow:0 0 8px rgba(224,177,60,0.7);}
-  .dot.pitch{background:var(--pitch);box-shadow:0 0 8px rgba(47,158,99,0.7);}
-  .dot.arg{background:var(--arg);box-shadow:0 0 8px rgba(108,189,236,0.7);}
+  .dot.gold{background:var(--gold);box-shadow:0 0 8px rgba(22,87,224,0.45);}
+  .dot.pitch{background:var(--pitch);box-shadow:0 0 8px rgba(31,163,92,0.45);}
+  .dot.arg{background:var(--arg);box-shadow:0 0 8px rgba(47,143,239,0.45);}
   .pane-head span{
     font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:600;
   }
@@ -143,6 +152,7 @@
     border:1px solid var(--line);
     border-radius:10px;
     padding:12px 16px;
+    box-shadow:0 1px 3px rgba(20,35,80,0.06);
   }
   .match::before,.match::after{
     content:"";position:absolute;width:14px;height:14px;background:var(--night);
@@ -165,7 +175,7 @@
   .team-row .score.dash{color:var(--muted);font-family:'Inter',sans-serif;font-weight:800;}
   .meta{font-size:10.5px;color:var(--muted);margin-top:6px;}
 
-  .match.arg{border-color:rgba(108,189,236,0.45);background:linear-gradient(135deg, rgba(108,189,236,0.10), var(--night-2) 65%);}
+  .match.arg{border-color:rgba(47,143,239,0.35);background:linear-gradient(135deg, rgba(47,143,239,0.07), var(--night-2) 65%);}
   .match.arg .name.arg-team{color:var(--arg);}
   .match.arg .name.arg-team::before{content:"🇦🇷 ";}
   .match.arg .tag .status.upcoming{color:var(--arg);}
@@ -175,16 +185,16 @@
     display:inline-flex;align-items:center;gap:3px;
     font-family:'Anton',sans-serif;font-weight:400;font-size:11px;line-height:1;
     padding:3px 7px 3px 5px;border-radius:20px;
-    background:linear-gradient(135deg, var(--arg), #a8d9f7 55%, var(--gold));
-    color:var(--night);
-    box-shadow:0 0 0 1px rgba(255,255,255,0.35) inset, 0 0 10px rgba(108,189,236,0.55);
+    background:linear-gradient(135deg, var(--arg), #8fd0ff 55%, var(--gold));
+    color:#fff;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.6) inset, 0 0 8px rgba(47,143,239,0.45);
     letter-spacing:0.02em;
     animation:badge-glow 2.4s ease-in-out infinite;
   }
   .messi-badge svg{width:10px;height:10px;flex:0 0 auto;}
   @keyframes badge-glow{
-    0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.35) inset, 0 0 8px rgba(108,189,236,0.4);}
-    50%{box-shadow:0 0 0 1px rgba(255,255,255,0.55) inset, 0 0 14px rgba(224,177,60,0.65);}
+    0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.6) inset, 0 0 6px rgba(47,143,239,0.35);}
+    50%{box-shadow:0 0 0 1px rgba(255,255,255,0.8) inset, 0 0 12px rgba(22,87,224,0.55);}
   }
   .group-card tr.messi-row{position:relative;}
   .group-card tr.messi-row td:first-child{color:var(--arg);font-weight:700;}
@@ -193,9 +203,9 @@
 
   /* ---------- GROUPS ---------- */
   .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding-top:6px;}
-  .group-card{background:var(--night-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .group-card{background:var(--night-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(20,35,80,0.06);}
   .group-card h3{
-    margin:0;padding:8px 12px;background:rgba(224,177,60,0.12);
+    margin:0;padding:8px 12px;background:rgba(22,87,224,0.08);
     font-size:11.5px;letter-spacing:0.08em;color:var(--gold);text-transform:uppercase;
     font-family:'Anton',sans-serif;font-weight:400;
   }
@@ -203,7 +213,7 @@
   th,td{padding:5px 10px;text-align:left;}
   th{color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.03em;}
   td.num, th.num{text-align:center;font-family:'Space Mono',monospace;}
-  tr:nth-child(even){background:rgba(255,255,255,0.025);}
+  tr:nth-child(even){background:rgba(22,87,224,0.03);}
   tr.qualify{border-left:3px solid var(--pitch);}
 
   /* ---------- STATUS BAR ---------- */
