@@ -160,7 +160,7 @@
   .tag .status.upcoming{color:var(--gold);}
   .tag .status.done{color:var(--pitch);}
   .team-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
-  .team-row .name{font-weight:600;font-size:14px;}
+  .team-row .name{font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:7px;}
   .team-row .score{font-family:'Anton',sans-serif;font-size:20px;font-variant-numeric:tabular-nums;color:var(--ice);}
   .team-row .score.dash{color:var(--muted);font-family:'Inter',sans-serif;font-weight:800;}
   .meta{font-size:10.5px;color:var(--muted);margin-top:6px;}
@@ -169,6 +169,25 @@
   .match.arg .name.arg-team{color:var(--arg);}
   .match.arg .name.arg-team::before{content:"🇦🇷 ";}
   .match.arg .tag .status.upcoming{color:var(--arg);}
+
+  /* ---------- MESSI #10 BADGE ---------- */
+  .messi-badge{
+    display:inline-flex;align-items:center;gap:3px;
+    font-family:'Anton',sans-serif;font-weight:400;font-size:11px;line-height:1;
+    padding:3px 7px 3px 5px;border-radius:20px;
+    background:linear-gradient(135deg, var(--arg), #a8d9f7 55%, var(--gold));
+    color:var(--night);
+    box-shadow:0 0 0 1px rgba(255,255,255,0.35) inset, 0 0 10px rgba(108,189,236,0.55);
+    letter-spacing:0.02em;
+    animation:badge-glow 2.4s ease-in-out infinite;
+  }
+  .messi-badge svg{width:10px;height:10px;flex:0 0 auto;}
+  @keyframes badge-glow{
+    0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.35) inset, 0 0 8px rgba(108,189,236,0.4);}
+    50%{box-shadow:0 0 0 1px rgba(255,255,255,0.55) inset, 0 0 14px rgba(224,177,60,0.65);}
+  }
+  .group-card tr.messi-row{position:relative;}
+  .group-card tr.messi-row td:first-child{color:var(--arg);font-weight:700;}
 
   .empty-note{color:var(--muted);font-size:13px;padding:18px 0;}
 
@@ -201,6 +220,7 @@
   @media (prefers-reduced-motion: reduce){
     .topbar::after{animation:none;}
     .statusbar .live-dot{animation:none;}
+    .messi-badge{animation:none;}
   }
 
   /* ---------- RESPONSIVE ---------- */
@@ -264,6 +284,11 @@ const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
 const DOW = ['CN','T2','T3','T4','T5','T6','T7'];
 function pad(n){ return String(n).padStart(2,'0'); }
+
+// Badge nhỏ đánh dấu đội có Messi mang áo số 10 — chỉ là nhãn chữ + icon ngôi sao,
+// không dùng hình ảnh/khuôn mặt thật.
+const MESSI_BADGE = `<span class="messi-badge" title="Lionel Messi · Áo số 10">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.6 1.5 6.8L12 17l-6.2 3.5 1.5-6.8L2.2 9.1l6.9-.8z"/></svg>10</span>`;
 
 function toVN(dateStr, timeStr){
   if(!dateStr || !timeStr) return null;
@@ -350,9 +375,9 @@ function renderMatches(matches){
       const cardClass = (isArg1 || isArg2) ? 'match arg' : 'match';
       return `<div class="${cardClass}">
         <div class="tag"><span class="status upcoming">Sắp diễn ra</span><span>${local}</span></div>
-        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}</span><span class="score dash">–</span></div>
+        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}${isArg1 ? MESSI_BADGE : ''}</span><span class="score dash">–</span></div>
         <div class="match-inner-divider"></div>
-        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}</span><span class="score dash">–</span></div>
+        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}${isArg2 ? MESSI_BADGE : ''}</span><span class="score dash">–</span></div>
         <div class="meta">${m.round || ''}${m.ground ? ' · ' + m.ground : ''}</div>
       </div>`;
     }).join('');
@@ -362,11 +387,14 @@ function renderMatches(matches){
     : done.map(m => {
       const local = fmtVN(m.vn);
       const [hs, as] = m.score.ft;
-      return `<div class="match">
+      const isArg1 = m.team1 === 'Argentina';
+      const isArg2 = m.team2 === 'Argentina';
+      const cardClass = (isArg1 || isArg2) ? 'match arg' : 'match';
+      return `<div class="${cardClass}">
         <div class="tag"><span class="status done">Kết thúc</span><span>${local}</span></div>
-        <div class="team-row"><span class="name">${m.team1}</span><span class="score">${hs}</span></div>
+        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}${isArg1 ? MESSI_BADGE : ''}</span><span class="score">${hs}</span></div>
         <div class="match-inner-divider"></div>
-        <div class="team-row"><span class="name">${m.team2}</span><span class="score">${as}</span></div>
+        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}${isArg2 ? MESSI_BADGE : ''}</span><span class="score">${as}</span></div>
       </div>`;
     }).join('');
 }
@@ -379,14 +407,18 @@ function renderGroups(groups){
     return;
   }
   el.innerHTML = keys.map(g => {
-    const rows = groups[g].map((t, i) => `
-      <tr class="${i < 2 ? 'qualify' : ''}">
-        <td>${t.team}</td>
+    const rows = groups[g].map((t, i) => {
+      const isArg = t.team === 'Argentina';
+      const rowClasses = [i < 2 ? 'qualify' : '', isArg ? 'messi-row' : ''].filter(Boolean).join(' ');
+      return `
+      <tr class="${rowClasses}">
+        <td>${t.team}${isArg ? MESSI_BADGE : ''}</td>
         <td class="num">${t.w}</td>
         <td class="num">${t.l}</td>
         <td class="num">${t.d}</td>
         <td class="num"><b>${t.pts}</b></td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
     return `<div class="group-card">
       <h3>Bảng ${g}</h3>
       <table>
