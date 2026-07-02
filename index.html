@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>World Cup 2026 — Lịch & Bảng Xếp Hạng</title>
+<title>World Cup 2026 (Tin Vo Quoc) — Lịch & Bảng Xếp Hạng</title>
 <style>
   :root{
     --field:#0c2340;
@@ -32,26 +32,6 @@
   }
   h1{margin:0;font-size:clamp(24px,3.6vw,38px);text-transform:uppercase;letter-spacing:0.02em;}
   h1 span{color:var(--gold);}
-  .snapshot-note{
-    max-width:1080px;margin:0 auto 22px;
-    background:rgba(212,167,44,0.12);
-    border:1px solid rgba(212,167,44,0.4);
-    border-radius:6px;
-    padding:10px 14px;
-    font-size:13px;
-    color:var(--white);
-  }
-  .snapshot-note b{color:var(--gold);}
-  .snapshot-note code{background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px;font-size:12px;}
-  #data-status{font-weight:600;}
-  #data-status.ok{color:var(--win);}
-  #data-status.err{color:var(--red);}
-  #refresh-btn{
-    margin-left:8px;background:var(--gold);color:var(--field);border:none;
-    border-radius:4px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;
-  }
-  #refresh-btn:hover{opacity:0.85;}
-  #refresh-btn:disabled{opacity:0.5;cursor:not-allowed;}
   .empty-note{color:var(--muted);font-size:13px;padding:8px 0;}
   main{max-width:1080px;margin:0 auto;}
   section{margin-bottom:36px;}
@@ -124,12 +104,8 @@
 <body>
 
 <header>
-  <h1 class="display">Fifa World Cup <span>2026</span></h1>
+  <h1 class="display">Fifa World Cup <span>2026 (Tins) </span></h1>
 </header>
-
-<div class="snapshot-note">
-  <b>Nguồn dữ liệu:</b> Trang tự động <code>fetch()</code> dữ liệu thật từ <b>openfootball/worldcup.json</b> (public domain, miễn phí, không cần API key) ngay trong trình duyệt. Kết quả được lưu cache 24 giờ (localStorage) nên không gọi lại liên tục — bấm nút "Làm mới dữ liệu" để fetch lại ngay. Vì nguồn này cập nhật bằng tay (không phải live), có thể trễ vài giờ so với thực tế trận đấu. <span id="data-status">Đang tải dữ liệu…</span><button id="refresh-btn" onclick="forceRefresh()">↻ Làm mới dữ liệu</button>
-</div>
 
 <main>
   <section id="matches-section">
@@ -153,7 +129,7 @@
 </main>
 
 <footer>
-  Dữ liệu: FIFA World Cup 2026 — vòng bảng, nguồn openfootball/worldcup.json (public domain, cập nhật ~1 lần/ngày). 2 đội đầu mỗi bảng đi tiếp vào vòng 32 đội. Bảng xếp hạng được tính lại từ kết quả trận mỗi lần tải trang.
+  Dữ liệu: FIFA World Cup 2026 — vòng bảng, nguồn openfootball/worldcup.json (public domain, cập nhật ~1 lần/ngày). 2 đội đầu mỗi bảng đi tiếp vào vòng 32 đội. Bảng xếp hạng được tính lại từ kết quả trận mỗi lần tải trang. Trang tự động làm mới dữ liệu định kỳ.
 </footer>
 
 <script>
@@ -163,8 +139,7 @@ const DATA_URLS = [
   'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json',
   'https://cdn.jsdelivr.net/gh/openfootball/worldcup.json@master/2026/worldcup.json'
 ];
-const CACHE_KEY = 'wc2026_cache_v1';
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 1 lần / ngày
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // tự động fetch lại mỗi 5 phút
 
 const DOW = ['CN','T2','T3','T4','T5','T6','T7'];
 
@@ -193,12 +168,6 @@ function isPlaceholderTeam(name){
   return /^[0-9]/.test(name) || /^[WL]\d+$/.test(name) || name.includes('/');
 }
 
-function setStatus(text, cls){
-  const el = document.getElementById('data-status');
-  el.textContent = text;
-  el.className = cls || '';
-}
-
 async function fetchFresh(){
   let lastErr = null;
   for(const url of DATA_URLS){
@@ -207,44 +176,12 @@ async function fetchFresh(){
       if(!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if(!data || !Array.isArray(data.matches)) throw new Error('Dữ liệu không hợp lệ');
-      try{
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-      }catch(e){ /* localStorage có thể bị chặn, bỏ qua */ }
       return data;
     }catch(e){
       lastErr = e;
     }
   }
   throw lastErr || new Error('Không fetch được nguồn nào');
-}
-
-function readCache(){
-  try{
-    const raw = localStorage.getItem(CACHE_KEY);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  }catch(e){ return null; }
-}
-
-async function loadData(forceRefresh){
-  const cached = readCache();
-  if(!forceRefresh && cached && (Date.now() - cached.ts) < CACHE_TTL_MS){
-    setStatus('Dữ liệu (cache, cập nhật ' + new Date(cached.ts).toLocaleString('vi-VN') + ')', 'ok');
-    return cached.data;
-  }
-  setStatus('Đang tải dữ liệu mới…', '');
-  try{
-    const data = await fetchFresh();
-    setStatus('Dữ liệu mới (cập nhật ' + new Date().toLocaleString('vi-VN') + ')', 'ok');
-    return data;
-  }catch(e){
-    if(cached){
-      setStatus('Không fetch được nguồn mới, dùng cache cũ (' + new Date(cached.ts).toLocaleString('vi-VN') + ')', 'err');
-      return cached.data;
-    }
-    setStatus('Không tải được dữ liệu (mạng bị chặn hoặc nguồn tạm lỗi)', 'err');
-    return null;
-  }
 }
 
 function computeGroups(matches){
@@ -349,19 +286,21 @@ function renderGroups(groups){
   }).join('');
 }
 
-async function run(forceRefresh){
-  document.getElementById('refresh-btn').disabled = true;
-  const data = await loadData(forceRefresh);
-  if(data){
-    renderMatches(data.matches);
-    renderGroups(computeGroups(data.matches));
+async function run(){
+  try{
+    const data = await fetchFresh();
+    if(data){
+      renderMatches(data.matches);
+      renderGroups(computeGroups(data.matches));
+    }
+  }catch(e){
+    // im lặng bỏ qua lỗi mạng, giữ nguyên dữ liệu đang hiển thị và thử lại ở lần tự động refresh tiếp theo
+    console.warn('Không tải được dữ liệu World Cup:', e);
   }
-  document.getElementById('refresh-btn').disabled = false;
 }
 
-function forceRefresh(){ run(true); }
-
-run(false);
+run();
+setInterval(run, AUTO_REFRESH_MS);
 </script>
 
 </body>
