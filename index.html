@@ -216,6 +216,30 @@
   tr:nth-child(even){background:rgba(22,87,224,0.03);}
   tr.qualify{border-left:3px solid var(--pitch);}
 
+  /* ---------- LIVE BANNER ---------- */
+  .live-banner{
+    flex:0 0 auto;display:none;
+    padding:10px 24px;background:linear-gradient(90deg, rgba(220,38,38,0.08), rgba(220,38,38,0.02));
+    border-bottom:1px solid rgba(220,38,38,0.25);
+    gap:12px;overflow-x:auto;
+  }
+  .live-banner.show{display:flex;}
+  .live-card{
+    flex:0 0 auto;min-width:230px;background:var(--night-2);border:1px solid rgba(220,38,38,0.3);
+    border-radius:9px;padding:9px 12px;box-shadow:0 1px 4px rgba(20,35,80,0.08);
+  }
+  .live-card .live-tag{
+    display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;
+    letter-spacing:0.1em;color:#dc2626;text-transform:uppercase;margin-bottom:5px;
+  }
+  .live-card .live-tag .live-red-dot{
+    width:6px;height:6px;border-radius:50%;background:#dc2626;animation:pulse 1.4s ease-in-out infinite;
+  }
+  .live-card .live-clock{color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;}
+  .live-card .team-row{padding:2px 0;}
+  .live-card .team-row .name{font-size:13px;}
+  .live-card .team-row .score{font-size:17px;}
+
   /* ---------- STATUS BAR ---------- */
   .statusbar{
     flex:0 0 auto;
@@ -231,6 +255,25 @@
     .topbar::after{animation:none;}
     .statusbar .live-dot{animation:none;}
     .messi-badge{animation:none;}
+  }
+
+  /* ---------- MUSIC TOGGLE ---------- */
+  .music-toggle{
+    position:fixed;right:20px;bottom:20px;z-index:50;
+    width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg, var(--gold), var(--arg));
+    color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(22,87,224,0.35);
+    transition:transform 0.15s ease;
+  }
+  .music-toggle:hover{transform:scale(1.06);}
+  .music-toggle.on{animation:music-pulse 1.6s ease-in-out infinite;}
+  @keyframes music-pulse{
+    0%,100%{box-shadow:0 4px 14px rgba(22,87,224,0.35);}
+    50%{box-shadow:0 4px 22px rgba(22,87,224,0.65);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .music-toggle.on{animation:none;}
   }
 
   /* ---------- RESPONSIVE ---------- */
@@ -262,6 +305,8 @@
     </div>
   </div>
 
+  <div class="live-banner" id="live-banner"></div>
+
   <div class="dashboard">
     <div class="pane active" id="pane-upcoming">
       <div class="pane-head"><span class="dot gold"></span><span>Sắp diễn ra</span></div>
@@ -278,11 +323,90 @@
   </div>
 
   <div class="statusbar">
-    <div><span class="live-dot"></span>Tự động làm mới mỗi 5 phút · nguồn openfootball/worldcup.json</div>
+    <div><span class="live-dot"></span>Lịch/kết quả: mỗi 5 phút (openfootball) · Trực tiếp: mỗi 30 giây (ESPN)</div>
     <div id="last-updated">Đang tải…</div>
   </div>
 
 </div>
+
+<!-- Nhạc nền: nhúng qua YouTube IFrame Player chính thức (không tải/lưu trữ file nhạc) -->
+<div id="yt-player-wrap" style="position:fixed;bottom:-200px;left:-200px;width:1px;height:1px;overflow:hidden;">
+  <div id="yt-player"></div>
+</div>
+<button id="music-toggle" class="music-toggle" title="Bật nhạc nền" onclick="toggleMusic()">🔈</button>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+// ---- Trình phát nhạc nền qua YouTube IFrame API ----
+// Trình duyệt chặn tự phát có tiếng, nên video bắt đầu ở chế độ tắt tiếng;
+// người dùng bấm nút tròn góc dưới để bật tiếng.
+const YT_VIDEO_ID = 'n1TAtLFIFAY';
+let ytPlayer = null;
+let musicOn = false;
+
+function onYouTubeIframeAPIReady(){
+  ytPlayer = new YT.Player('yt-player', {
+    height: '0',
+    width: '0',
+    videoId: YT_VIDEO_ID,
+    playerVars: {
+      autoplay: 1,
+      mute: 1,
+      loop: 1,
+      playlist: YT_VIDEO_ID,
+      controls: 0
+    },
+    events: {
+      onReady: (e) => { e.target.playVideo(); }
+    }
+  });
+}
+
+function setMusicUI(on){
+  const btn = document.getElementById('music-toggle');
+  musicOn = on;
+  if(on){
+    btn.textContent = '🔊';
+    btn.title = 'Tắt nhạc nền';
+    btn.classList.add('on');
+  } else {
+    btn.textContent = '🔈';
+    btn.title = 'Bật nhạc nền';
+    btn.classList.remove('on');
+  }
+}
+
+function toggleMusic(){
+  if(!ytPlayer || typeof ytPlayer.unMute !== 'function') return;
+  if(musicOn){
+    ytPlayer.mute();
+    setMusicUI(false);
+  } else {
+    ytPlayer.unMute();
+    ytPlayer.playVideo();
+    setMusicUI(true);
+  }
+}
+
+// Trình duyệt luôn chặn phát nhạc có tiếng ngay khi trang vừa mở (chính sách autoplay
+// của Chrome/Safari/Firefox, không trang web nào lách được). Cách gần nhất với
+// "tự động": bật tiếng ngay khi người dùng có tương tác ĐẦU TIÊN bất kỳ trên trang
+// (click, chạm, cuộn, gõ phím) — không cần bấm đúng nút nhạc.
+let autoUnmuteDone = false;
+function autoUnmuteOnFirstInteraction(){
+  if(autoUnmuteDone || !ytPlayer || typeof ytPlayer.unMute !== 'function') return;
+  autoUnmuteDone = true;
+  ytPlayer.unMute();
+  ytPlayer.playVideo();
+  setMusicUI(true);
+  ['click','touchstart','keydown','scroll'].forEach(evt =>
+    document.removeEventListener(evt, autoUnmuteOnFirstInteraction)
+  );
+}
+['click','touchstart','keydown','scroll'].forEach(evt =>
+  document.addEventListener(evt, autoUnmuteOnFirstInteraction, { once:false, passive:true })
+);
+</script>
 
 <script>
 // ---- Nguồn dữ liệu miễn phí, không cần API key ----
@@ -438,6 +562,62 @@ function renderGroups(groups){
     </div>`;
   }).join('');
 }
+
+// ---- Trận đang diễn ra (LIVE) — nguồn ESPN scoreboard, cập nhật theo phút thực ----
+// Lưu ý: openfootball/worldcup.json chỉ được cộng đồng cập nhật thủ công SAU khi trận
+// kết thúc (không có tỉ số/phút thi đấu khi trận đang live), nên cần nguồn riêng cho phần này.
+const ESPN_LIVE_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
+const LIVE_REFRESH_MS = 30 * 1000;
+
+function fmtLiveClock(status){
+  const st = status?.type?.state;
+  if(st === 'in'){
+    if(status.type.name === 'STATUS_HALFTIME') return 'Nghỉ giữa hiệp';
+    const clock = status.displayClock || '';
+    const period = status.period ? `H${status.period}` : '';
+    return [period, clock].filter(Boolean).join(' · ') || 'Đang diễn ra';
+  }
+  if(st === 'post') return status.type.name === 'STATUS_FULL_TIME' ? 'Kết thúc' : (status.type.shortDetail || 'Kết thúc');
+  return status?.type?.shortDetail || '';
+}
+
+async function fetchLiveMatches(){
+  const el = document.getElementById('live-banner');
+  try{
+    const res = await fetch(ESPN_LIVE_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const events = Array.isArray(data.events) ? data.events : [];
+    const live = events.filter(ev => ev?.status?.type?.state === 'in');
+
+    if(live.length === 0){
+      el.classList.remove('show');
+      el.innerHTML = '';
+      return;
+    }
+
+    el.innerHTML = live.map(ev => {
+      const comp = ev.competitions?.[0];
+      const competitors = comp?.competitors || [];
+      const home = competitors.find(c => c.homeAway === 'home') || competitors[0];
+      const away = competitors.find(c => c.homeAway === 'away') || competitors[1];
+      if(!home || !away) return '';
+      const clockTxt = fmtLiveClock(comp.status);
+      return `<div class="live-card">
+        <div class="live-tag"><span class="live-red-dot"></span>Trực tiếp</div>
+        <div class="team-row"><span class="name">${home.team?.displayName || home.team?.name || ''}</span><span class="score">${home.score ?? '-'}</span></div>
+        <div class="team-row"><span class="name">${away.team?.displayName || away.team?.name || ''}</span><span class="score">${away.score ?? '-'}</span></div>
+        <div class="live-clock">${clockTxt}</div>
+      </div>`;
+    }).join('');
+    el.classList.add('show');
+  }catch(e){
+    // Im lặng bỏ qua nếu nguồn live tạm thời lỗi — phần lịch/kết quả chính vẫn hoạt động bình thường
+    console.warn('Không tải được dữ liệu trực tiếp:', e);
+  }
+}
+fetchLiveMatches();
+setInterval(fetchLiveMatches, LIVE_REFRESH_MS);
 
 async function run(){
   try{
