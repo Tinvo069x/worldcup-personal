@@ -175,6 +175,30 @@
   .team-row .score.dash{color:var(--muted);font-family:'Inter',sans-serif;font-weight:800;}
   .meta{font-size:10.5px;color:var(--muted);margin-top:6px;}
 
+  /* ---------- WIN / LOSE HIGHLIGHT ---------- */
+  .team-row.win{
+    background:linear-gradient(90deg, rgba(31,163,92,0.12), rgba(31,163,92,0.02));
+    border-radius:7px;margin:0 -8px;padding:5px 8px;
+    box-shadow:inset 3px 0 0 var(--pitch);
+  }
+  .team-row.win .name{color:var(--pitch);font-weight:800;}
+  .team-row.win .score{color:var(--pitch);}
+  .team-row.win .win-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;margin-left:6px;color:#fff;background:var(--pitch);
+    border-radius:50%;padding:3px;flex:0 0 auto;
+    box-shadow:0 0 0 2px rgba(31,163,92,0.18);
+  }
+  .team-row.win .win-icon svg{width:100%;height:100%;}
+  .team-row.lose{opacity:0.55;}
+  .team-row.lose .name,.team-row.lose .score{color:var(--muted);font-weight:600;}
+  .team-row.draw .name,.team-row.draw .score{color:var(--ice);}
+  .status-note{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;}
+  .pen-note{
+    font-size:10.5px;color:var(--muted);margin-top:6px;padding-top:6px;
+    border-top:1px dashed var(--line);font-family:'Space Mono',monospace;
+  }
+
   .match.arg{border-color:rgba(47,143,239,0.35);background:linear-gradient(135deg, rgba(47,143,239,0.07), var(--night-2) 65%);}
   .match.arg .name.arg-team{color:var(--arg);}
   .match.arg .name.arg-team::before{content:"🇦🇷 ";}
@@ -424,6 +448,11 @@ function pad(n){ return String(n).padStart(2,'0'); }
 const MESSI_BADGE = `<span class="messi-badge" title="Lionel Messi · Áo số 10">
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.6 1.5 6.8L12 17l-6.2 3.5 1.5-6.8L2.2 9.1l6.9-.8z"/></svg>10</span>`;
 
+// Icon cúp nhỏ đánh dấu đội thắng ở các trận đã kết thúc
+const WIN_ICON = `<span class="win-icon" title="Đội thắng">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v2h2.5a1 1 0 0 1 1 1v1.2c0 2.5-1.9 4.6-4.4 5-.7 1.7-2.1 3-3.8 3.5V19h3v2H7.7v-2h3v-3.3c-1.7-.5-3.1-1.8-3.8-3.5C4.4 11.8 2.5 9.7 2.5 7.2V6a1 1 0 0 1 1-1H6V3zm0 4H4.5v.2c0 1.3.7 2.5 1.8 3.1A9 9 0 0 1 6 7zm12 0a9 9 0 0 1-.3 3.3c1.1-.6 1.8-1.8 1.8-3.1V7H18z"/></svg>
+</span>`;
+
 function toVN(dateStr, timeStr){
   if(!dateStr || !timeStr) return null;
   const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d+)/);
@@ -486,7 +515,32 @@ function computeGroups(matches){
   return result;
 }
 
-function renderMatches(matches){
+// Xác định tỉ số hiển thị + đội thắng thực sự, có tính hiệp phụ (et) và luân lưu (p).
+// Vòng bảng: chỉ có ft, hòa thì hòa thật.
+// Vòng loại trực tiếp: nếu hòa sau 90p (ft) -> xét hiệp phụ (et); nếu vẫn hòa -> xét luân lưu (p).
+function getMatchResult(score){
+  const ft = score.ft;
+  const et = Array.isArray(score.et) ? score.et : null;
+  const pen = Array.isArray(score.p) ? score.p : null;
+
+  // Tỉ số hiển thị chính trên thẻ trận: ưu tiên hiệp phụ nếu có (đã bao gồm bàn thắng hiệp chính), fallback ft
+  const display = et || ft;
+  const [hs, as] = display;
+
+  let winner = 0; // 0 = hòa/chưa xác định, 1 = đội 1 thắng, 2 = đội 2 thắng
+  let mode = 'ft';
+  if(hs > as) { winner = 1; mode = et ? 'et' : 'ft'; }
+  else if(as > hs) { winner = 2; mode = et ? 'et' : 'ft'; }
+  else if(pen){
+    // hòa sau hiệp chính (và hiệp phụ nếu có) -> luân lưu quyết định
+    winner = pen[0] > pen[1] ? 1 : (pen[1] > pen[0] ? 2 : 0);
+    mode = 'pen';
+  }
+
+  return { hs, as, winner, mode, pen };
+}
+
+
   const elUpcoming = document.getElementById('matches-upcoming');
   const elDone = document.getElementById('matches-done');
 
@@ -520,15 +574,24 @@ function renderMatches(matches){
     ? '<div class="empty-note">Chưa có kết quả nào.</div>'
     : done.map(m => {
       const local = fmtVN(m.vn);
-      const [hs, as] = m.score.ft;
       const isArg1 = m.team1 === 'Argentina';
       const isArg2 = m.team2 === 'Argentina';
       const cardClass = (isArg1 || isArg2) ? 'match arg' : 'match';
+
+      const { hs, as, winner, mode, pen } = getMatchResult(m.score);
+      const isWin1 = winner === 1, isWin2 = winner === 2;
+      const row1Class = 'team-row' + (isWin1 ? ' win' : isWin2 ? ' lose' : ' draw');
+      const row2Class = 'team-row' + (isWin2 ? ' win' : isWin1 ? ' lose' : ' draw');
+      const statusNote = mode === 'pen' ? ' <span class="status-note">(Luân lưu)</span>'
+        : mode === 'et' ? ' <span class="status-note">(Hiệp phụ)</span>' : '';
+      const penNote = pen ? `<div class="pen-note">Luân lưu: ${pen[0]}–${pen[1]}</div>` : '';
+
       return `<div class="${cardClass}">
-        <div class="tag"><span class="status done">Kết thúc</span><span>${local}</span></div>
-        <div class="team-row"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}${isArg1 ? MESSI_BADGE : ''}</span><span class="score">${hs}</span></div>
+        <div class="tag"><span class="status done">Kết thúc${statusNote}</span><span>${local}</span></div>
+        <div class="${row1Class}"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}${isArg1 ? MESSI_BADGE : ''}</span><span class="score">${hs}${isWin1 ? WIN_ICON : ''}</span></div>
         <div class="match-inner-divider"></div>
-        <div class="team-row"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}${isArg2 ? MESSI_BADGE : ''}</span><span class="score">${as}</span></div>
+        <div class="${row2Class}"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}${isArg2 ? MESSI_BADGE : ''}</span><span class="score">${as}${isWin2 ? WIN_ICON : ''}</span></div>
+        ${penNote}
       </div>`;
     }).join('');
 }
