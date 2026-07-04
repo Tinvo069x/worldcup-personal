@@ -429,6 +429,14 @@ function autoUnmuteOnFirstInteraction(){
 
 <script>
 // ---- Nguồn dữ liệu miễn phí, không cần API key ----
+// Nguồn CHÍNH: ESPN scoreboard — trả về TÊN ĐỘI THẬT ngay khi vòng trước kết thúc
+// (không có độ trễ). Nguồn DỰ PHÒNG: openfootball/worldcup.json — đây là dữ liệu
+// kiểu "wiki", được cập nhật THỦ CÔNG bởi cộng đồng, nên ở vòng knockout khi đối
+// thủ chưa được điền tên thật (vẫn là placeholder kiểu "W65"/"L73"), cả trận đấu
+// sẽ bị ẩn đi (xem hàm isPlaceholderTeam) dù một trong hai đội (vd Argentina) đã
+// biết chắc chắn. Đây chính là lý do các trận vòng 1/8 trở đi có thể "biến mất"
+// khỏi lịch dù đã có thông tin.
+const ESPN_SCHEDULE_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=300';
 const DATA_URLS = [
   'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json',
   'https://cdn.jsdelivr.net/gh/openfootball/worldcup.json@master/2026/worldcup.json'
@@ -457,16 +465,69 @@ function toVN(dateStr, timeStr){
   const utcMs = Date.UTC(y, mo - 1, d, hh - offset, mm);
   return new Date(utcMs + 7 * 60 * 60 * 1000);
 }
+// Chuyển thời gian ISO (UTC, có hậu tố Z) từ ESPN sang giờ Việt Nam
+function toVNFromISO(iso){
+  if(!iso) return null;
+  const ms = Date.parse(iso);
+  if(Number.isNaN(ms)) return null;
+  return new Date(ms + 7 * 60 * 60 * 1000);
+}
 function fmtVN(d){
   if(!d) return '';
   return `${DOW[d.getUTCDay()]}, ${pad(d.getUTCDate())}/${pad(d.getUTCMonth()+1)}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 function isPlaceholderTeam(name){
   if(!name) return true;
-  return /^[0-9]/.test(name) || /^[WL]\d+$/.test(name) || name.includes('/');
+  const n = name.trim();
+  if(!n || /^tbd$/i.test(n)) return true;
+  return /^[0-9]/.test(n) || /^[WL]\d+$/.test(n) || n.includes('/');
+}
+
+// ---- Chuyển dữ liệu ESPN scoreboard sang định dạng match dùng chung ----
+// ESPN cập nhật tên đội thật ngay khi vòng trước kết thúc (không có độ trễ kiểu
+// wiki như openfootball), nên đây là nguồn đáng tin cậy hơn cho vòng knockout.
+async function fetchESPNSchedule(){
+  const res = await fetch(ESPN_SCHEDULE_URL, {cache:'no-store'});
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const events = Array.isArray(data.events) ? data.events : [];
+  const matches = events.map(ev => {
+    const comp = ev.competitions && ev.competitions[0];
+    if(!comp) return null;
+    const competitors = comp.competitors || [];
+    const home = competitors.find(c => c.homeAway === 'home') || competitors[0];
+    const away = competitors.find(c => c.homeAway === 'away') || competitors[1];
+    if(!home || !home.team || !away || !away.team) return null;
+    const completed = !!(comp.status && comp.status.type && comp.status.type.completed);
+    const noteText = comp.altGameNote || '';
+    const groupMatch = noteText.match(/Group\s+([A-Za-z0-9]+)/i);
+    const commaIdx = noteText.indexOf(',');
+    const roundText = commaIdx >= 0 ? noteText.slice(commaIdx + 1).trim() : noteText;
+    const venue = comp.venue || {};
+    const ground = [venue.fullName, venue.address && venue.address.city].filter(Boolean).join(' · ');
+    const hs = parseInt(home.score, 10), as = parseInt(away.score, 10);
+    return {
+      team1: home.team.displayName || home.team.name || '',
+      team2: away.team.displayName || away.team.name || '',
+      dateISO: ev.date,
+      group: groupMatch ? ('Group ' + groupMatch[1]) : null,
+      round: roundText || null,
+      ground: ground || null,
+      score: (completed && !Number.isNaN(hs) && !Number.isNaN(as)) ? { ft: [hs, as] } : null
+    };
+  }).filter(Boolean);
+  if(matches.length === 0) throw new Error('ESPN không trả về trận nào');
+  return { matches };
 }
 
 async function fetchFresh(){
+  // 1) Thử ESPN trước — có tên đội thật ngay khi vòng trước kết thúc
+  try{
+    return await fetchESPNSchedule();
+  }catch(e){
+    console.warn('ESPN schedule lỗi, chuyển sang nguồn dự phòng openfootball:', e);
+  }
+  // 2) Dự phòng: openfootball (lưu ý: cập nhật thủ công, có thể trễ ở vòng knockout)
   let lastErr = null;
   for(const url of DATA_URLS){
     try{
@@ -516,7 +577,7 @@ function renderMatches(matches){
 
   const withTime = matches
     .filter(m => !isPlaceholderTeam(m.team1) && !isPlaceholderTeam(m.team2))
-    .map(m => ({ ...m, vn: toVN(m.date, m.time) }))
+    .map(m => ({ ...m, vn: m.dateISO ? toVNFromISO(m.dateISO) : toVN(m.date, m.time) }))
     .filter(m => m.vn);
 
   const done = withTime.filter(m => m.score && Array.isArray(m.score.ft))
