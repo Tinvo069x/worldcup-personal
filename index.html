@@ -193,11 +193,6 @@
   .team-row.lose{opacity:0.55;}
   .team-row.lose .name,.team-row.lose .score{color:var(--muted);font-weight:600;}
   .team-row.draw .name,.team-row.draw .score{color:var(--ice);}
-  .status-note{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;}
-  .pen-note{
-    font-size:10.5px;color:var(--muted);margin-top:6px;padding-top:6px;
-    border-top:1px dashed var(--line);font-family:'Space Mono',monospace;
-  }
 
   .match.arg{border-color:rgba(47,143,239,0.35);background:linear-gradient(135deg, rgba(47,143,239,0.07), var(--night-2) 65%);}
   .match.arg .name.arg-team{color:var(--arg);}
@@ -515,32 +510,7 @@ function computeGroups(matches){
   return result;
 }
 
-// Xác định tỉ số hiển thị + đội thắng thực sự, có tính hiệp phụ (et) và luân lưu (p).
-// Vòng bảng: chỉ có ft, hòa thì hòa thật.
-// Vòng loại trực tiếp: nếu hòa sau 90p (ft) -> xét hiệp phụ (et); nếu vẫn hòa -> xét luân lưu (p).
-function getMatchResult(score){
-  const ft = score.ft;
-  const et = Array.isArray(score.et) ? score.et : null;
-  const pen = Array.isArray(score.p) ? score.p : null;
-
-  // Tỉ số hiển thị chính trên thẻ trận: ưu tiên hiệp phụ nếu có (đã bao gồm bàn thắng hiệp chính), fallback ft
-  const display = et || ft;
-  const [hs, as] = display;
-
-  let winner = 0; // 0 = hòa/chưa xác định, 1 = đội 1 thắng, 2 = đội 2 thắng
-  let mode = 'ft';
-  if(hs > as) { winner = 1; mode = et ? 'et' : 'ft'; }
-  else if(as > hs) { winner = 2; mode = et ? 'et' : 'ft'; }
-  else if(pen){
-    // hòa sau hiệp chính (và hiệp phụ nếu có) -> luân lưu quyết định
-    winner = pen[0] > pen[1] ? 1 : (pen[1] > pen[0] ? 2 : 0);
-    mode = 'pen';
-  }
-
-  return { hs, as, winner, mode, pen };
-}
-
-
+function renderMatches(matches){
   const elUpcoming = document.getElementById('matches-upcoming');
   const elDone = document.getElementById('matches-done');
 
@@ -574,24 +544,18 @@ function getMatchResult(score){
     ? '<div class="empty-note">Chưa có kết quả nào.</div>'
     : done.map(m => {
       const local = fmtVN(m.vn);
+      const [hs, as] = m.score.ft;
       const isArg1 = m.team1 === 'Argentina';
       const isArg2 = m.team2 === 'Argentina';
       const cardClass = (isArg1 || isArg2) ? 'match arg' : 'match';
-
-      const { hs, as, winner, mode, pen } = getMatchResult(m.score);
-      const isWin1 = winner === 1, isWin2 = winner === 2;
+      const isWin1 = hs > as, isWin2 = as > hs, isDraw = hs === as;
       const row1Class = 'team-row' + (isWin1 ? ' win' : isWin2 ? ' lose' : ' draw');
       const row2Class = 'team-row' + (isWin2 ? ' win' : isWin1 ? ' lose' : ' draw');
-      const statusNote = mode === 'pen' ? ' <span class="status-note">(Luân lưu)</span>'
-        : mode === 'et' ? ' <span class="status-note">(Hiệp phụ)</span>' : '';
-      const penNote = pen ? `<div class="pen-note">Luân lưu: ${pen[0]}–${pen[1]}</div>` : '';
-
       return `<div class="${cardClass}">
-        <div class="tag"><span class="status done">Kết thúc${statusNote}</span><span>${local}</span></div>
+        <div class="tag"><span class="status done">Kết thúc</span><span>${local}</span></div>
         <div class="${row1Class}"><span class="name${isArg1 ? ' arg-team' : ''}">${m.team1}${isArg1 ? MESSI_BADGE : ''}</span><span class="score">${hs}${isWin1 ? WIN_ICON : ''}</span></div>
         <div class="match-inner-divider"></div>
         <div class="${row2Class}"><span class="name${isArg2 ? ' arg-team' : ''}">${m.team2}${isArg2 ? MESSI_BADGE : ''}</span><span class="score">${as}${isWin2 ? WIN_ICON : ''}</span></div>
-        ${penNote}
       </div>`;
     }).join('');
 }
